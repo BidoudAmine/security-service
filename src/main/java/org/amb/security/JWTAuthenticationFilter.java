@@ -5,7 +5,7 @@ package org.amb.security;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.amb.entities.Utilisateur;
+import org.amb.entities.AppUser;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -34,8 +34,8 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
-            Utilisateur utilisateur = new ObjectMapper().readValue(request.getInputStream() , Utilisateur.class);
-            return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(utilisateur.getUsername() , utilisateur.getPassword())) ;
+            AppUser appUser = new ObjectMapper().readValue(request.getInputStream() , AppUser.class);
+            return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(appUser.getUsername() , appUser.getPassword())) ;
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -56,9 +56,9 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .withIssuer(request.getRequestURI())
                 .withSubject(user.getUsername())
                 .withArrayClaim("roles" , roles.toArray(new String [roles.size()]))
-                .withExpiresAt(new Date(System.currentTimeMillis()+10*24*3600))
-                    .sign(Algorithm.HMAC256("amb@uik.net"));
-        response.addHeader("Authorisation" , jwt);
+                .withExpiresAt(new Date(System.currentTimeMillis()+SecurityParams.EXPIRATION))
+                    .sign(Algorithm.HMAC256(SecurityParams.SECRET));
+        response.addHeader(SecurityParams.JWT_HEADER_NAME , jwt);
 
 
 
